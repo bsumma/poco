@@ -438,30 +438,30 @@ endif()
 
 #############################################################
 # Uninstall stuff see: http://www.vtk.org/Wiki/CMake_FAQ
-configure_file(
-	"${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
-	"${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-	IMMEDIATE @ONLY)
-
-add_custom_target(uninstall
-	"${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-)
+#configure_file(
+#	"${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
+#	"${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+#	IMMEDIATE @ONLY)
+#
+#add_custom_target(uninstall
+#	"${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+#)
 
 #############################################################
 # Enable packaging
-
-if (CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
-	include(InstallRequiredSystemLibraries)
-endif()
-
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Poco Libraries")
-set(CPACK_PACKAGE_VENDOR "Applied Informatics Software Engineering GmbH")
-set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "/usr/local")
-
-include(CPack)
-
+#
+#if (CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+#	include(InstallRequiredSystemLibraries)
+#endif()
+#
+#set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Poco Libraries")
+#set(CPACK_PACKAGE_VENDOR "Applied Informatics Software Engineering GmbH")
+#set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
+#set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+#set(CPACK_PACKAGE_INSTALL_DIRECTORY "/usr/local")
+#
+#include(CPack)
+#
 #############################################################
 # cmake config files
 
