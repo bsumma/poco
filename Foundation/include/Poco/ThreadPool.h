@@ -69,10 +69,18 @@ public:
 		/// If a thread is running idle for more than idleTime seconds,
 		/// and more than minCapacity threads are running, the thread
 		/// is killed. Threads are created with given stack size.
-
+	ThreadPool(Event* event,
+			int minCapacity = 2,
+			int maxCapacity = 16,
+			int idleTime = 60,
+			int stackSize = POCO_THREAD_STACK_SIZE);
+	/// constructor that takes an additional bool to determine if the event should be initialized
 	~ThreadPool();
 		/// Currently running threads will remain active
 		/// until they complete.
+	Event* _pathCamEvent = nullptr;
+		/// Create a new event pointer that will be used to signal the completion of a thread, default value is nullptr
+
 
 	void addCapacity(int n);
 		/// Increases (or decreases, if n is negative)
