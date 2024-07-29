@@ -73,6 +73,9 @@ public:
 	~ThreadPool();
 		/// Currently running threads will remain active
 		/// until they complete.
+  
+  Event* _pathCamEvent = nullptr;
+    /// Create a new event pointer that will be used to signal the completion of a thread, default value is nullptr
 
 	void addCapacity(int n);
 		/// Increases (or decreases, if n is negative)

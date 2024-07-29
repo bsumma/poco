@@ -20,6 +20,10 @@
 #include "Poco/ErrorHandler.h"
 #include <sstream>
 #include <ctime>
+#if defined(_WIN32_WCE) && _WIN32_WCE < 0x800
+#include "wce_time.h"
+#endif
+
 
 
 namespace Poco {
@@ -29,6 +33,8 @@ class PooledThread: public Runnable
 {
 public:
 	PooledThread(const std::string& name, int stackSize = POCO_THREAD_STACK_SIZE);
+	PooledThread(const std::string& name, Event* pathCamEvent, int stackSize = POCO_THREAD_STACK_SIZE);
+	
 	~PooledThread();
 
 	void start();
@@ -40,6 +46,7 @@ public:
 	void activate();
 	void release();
 	void run() override;
+	Event* _pathCamEvent;
 
 private:
 	volatile bool        _idle;
@@ -64,7 +71,29 @@ PooledThread::PooledThread(const std::string& name, int stackSize):
 {
 	poco_assert_dbg (stackSize >= 0);
 	_thread.setStackSize(stackSize);
+#if defined(_WIN32_WCE) && _WIN32_WCE < 0x800
+	_idleTime = wceex_time(NULL);
+#else
 	_idleTime = std::time(nullptr);
+#endif
+}
+
+PooledThread::PooledThread(const std::string& name, Event* pathCamEvent, int stackSize):
+		_idle(true),
+		_idleTime(0),
+		_pTarget(0),
+		_name(name),
+		_thread(name),
+		_targetCompleted(false),
+		_pathCamEvent(pathCamEvent)
+{
+	poco_assert_dbg (stackSize >= 0);
+	_thread.setStackSize(stackSize);
+#if defined(_WIN32_WCE) && _WIN32_WCE < 0x800
+	_idleTime = wceex_time(NULL);
+#else
+	_idleTime = std::time(NULL);
+#endif
 }
 
 
@@ -127,8 +156,12 @@ inline bool PooledThread::idle()
 int PooledThread::idleTime()
 {
 	FastMutex::ScopedLock lock(_mutex);
+#if defined(_WIN32_WCE) && _WIN32_WCE < 0x800
+	return (int) (wceex_time(NULL) - _idleTime);
+#else
 
 	return (int) (time(nullptr) - _idleTime);
+#endif
 }
 
 
@@ -201,9 +234,14 @@ void PooledThread::run()
 			}
 			FastMutex::ScopedLock lock(_mutex);
 			_pTarget  = nullptr;
+#if defined(_WIN32_WCE) && _WIN32_WCE < 0x800
+			_idleTime = wceex_time(NULL);
+#else
 			_idleTime = time(nullptr);
+#endif
 			_idle     = true;
 			_targetCompleted.set();
+			_pathCamEvent->set();
 			ThreadLocalStorage::clear();
 			_thread.setName(_name);
 			_thread.setPriority(Thread::PRIO_NORMAL);
@@ -261,6 +299,31 @@ ThreadPool::ThreadPool(const std::string& name,
 		pThread->start();
 	}
 }
+
+
+ThreadPool::ThreadPool(Event* pathCamEvent,
+		int minCapacity,
+		int maxCapacity,
+		int idleTime,
+		int stackSize):
+	_minCapacity(minCapacity),
+	_maxCapacity(maxCapacity),
+	_idleTime(idleTime),
+	_serial(0),
+	_age(0),
+	_stackSize(stackSize),
+	_pathCamEvent(pathCamEvent)
+{
+	poco_assert (minCapacity >= 1 && maxCapacity >= minCapacity && idleTime > 0);
+
+	for (int i = 0; i < _minCapacity; i++)
+	{
+		PooledThread* pThread = createThread();
+		_threads.push_back(pThread);
+		pThread->start();
+	}
+}
+
 
 
 ThreadPool::~ThreadPool()
@@ -463,8 +526,8 @@ PooledThread* ThreadPool::createThread()
 {
 	std::ostringstream name;
 	name << _name << "[#" << ++_serial << "]";
-	return new PooledThread(name.str(), _stackSize);
-}
+    return new PooledThread(name.str(), ThreadPool::_pathCamEvent, _stackSize);
+ }
 
 
 class ThreadPoolSingletonHolder
@@ -495,6 +558,11 @@ private:
 	ThreadPool* _pPool;
 	FastMutex   _mutex;
 };
+
+namespace
+{
+	static ThreadPoolSingletonHolder sh;
+}
 
 
 ThreadPool& ThreadPool::defaultPool()
